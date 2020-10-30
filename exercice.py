@@ -16,42 +16,66 @@ def merge_channels(channels):
 	# À partir de plusieurs listes d'échantillons (réels), les combiner de façon à ce que la liste retournée aie la forme :
 	# [c[0][0], c[1][0], c[2][0], c[0][1], c[1][1], c[2][1], ...] où c est l'agument channels
 
+	# [L[0], R[0], L[1], R[1]]
+
+	# result = []
+	# for sample in zip(*channels):
+	# 	for sample in samples:
+	# 		result.append(sample)
+	return [sample for samples in zip(*channels) for sample in samples]
+
 def separate_channels(samples, num_channels):
 	# Faire l'inverse de la fonction merge_channels
+	# channels = []
+	# for i in range(num_channels):
+	# 	channels += samples[i::num_channels]
+	return [samples[i::num_channels] for i in range(num_channels)]
 
 def sine_gen(freq, amplitude, duration_seconds):
 	# Générer une onde sinusoïdale à partir de la fréquence et de l'amplitude donnée, sur le temps demandé et considérant le taux d'échantillonnage.
 	# Les échantillons sont des nombres réels entre -1 et 1.
+	for i in range(int(SAMPLING_FREQ* duration_seconds)):
+		yield amplitude * math.sin(freq * (i / SAMPLING_FREQ * 2 * math.pi))
+	pass
 
 def convert_to_bytes(samples):
 	# Convertir les échantillons en tableau de bytes en les convertissant en entiers 16 bits.
 	# Les échantillons en entrée sont entre -1 et 1, nous voulons les mettre entre -MAX_SAMPLE_VALUE et MAX_SAMPLE_VALUE
+	pass
 
 def convert_to_samples(bytes):
 	# Faire l'opération inverse de convert_to_bytes, en convertissant des échantillons entier 16 bits en échantillons réels
-
+	pass
 
 def main():
-	if not os.path.exists("output"):
-		os.mkdir("output")
+	# 42 = [42, 0] # Petit-boutisme(?)
+	# 256 = [0, 1]
+	print([int(b) for b in struct.pack("h", 256)])
+	print(struct.unpack("hhh", bytes([2, 1, 42, 0, 0, 1])))
 
+	print(merge_channels([[11, 12], [21, 22]]))
 	print(separate_channels([[11, 12], [21, 22], [31, 32]], 3))
+	if False:
+		if not os.path.exists("output"):
+			os.mkdir("output")
 
-	with wave.open("output/perfect_fifth.wav", "wb") as writer:
-		writer.setnchannels(2)
-		writer.setsampwidth(2)
-		writer.setframerate(SAMPLING_FREQ)
-		writer.setnframes(SAMPLING_FREQ*5)
+	
 
-		# On générè un la3 (220 Hz) et un mi4 (intonnation juste, donc ratio de 3/2)
-		samples1 = [s for s in sine_gen(220, 0.4, 3.0)]
-		samples2 = [s for s in sine_gen(220 * (3/2), 0.3, 3.0)]
+		with wave.open("output/perfect_fifth.wav", "wb") as writer:
+			writer.setnchannels(2)
+			writer.setsampwidth(2)
+			writer.setframerate(SAMPLING_FREQ)
+			writer.setnframes(SAMPLING_FREQ*5)
 
-		# On met les samples dans des channels séparés (la à gauche, mi à droite)
-		merged = merge_channels([samples1, samples2])
-		data = convert_to_bytes(merged)
+			# On générè un la3 (220 Hz) et un mi4 (intonnation juste, donc ratio de 3/2)
+			samples1 = [s for s in sine_gen(220, 0.4, 3.0)]
+			samples2 = [s for s in sine_gen(220 * (3/2), 0.3, 3.0)]
 
-		writer.writeframes(data)
+			# On met les samples dans des channels séparés (la à gauche, mi à droite)
+			merged = merge_channels([samples1, samples2])
+			data = convert_to_bytes(merged)
+
+			writer.writeframes(data)
 
 if __name__ == "__main__":
 	main()
